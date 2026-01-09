@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend tests and linting
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./apps/backend
+        run: npm ci
+
+      - name: Check for syntax errors
+        working-directory: ./apps/backend
+        run: node -c src/index.js
+
+      - name: Run tests (if available)
+        working-directory: ./apps/backend
+        run: npm test --if-present
+        continue-on-error: true
+
+  # Frontend build and tests
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./apps/frontend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./apps/frontend
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:3001
+          VITE_WS_URL: ws://localhost:3001
+
+      - name: Run tests (if available)
+        working-directory: ./apps/frontend
+        run: npm test --if-present
+        continue-on-error: true
+
+  # Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Backend security audit
+        working-directory: ./apps/backend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Frontend security audit
+        working-directory: ./apps/frontend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
