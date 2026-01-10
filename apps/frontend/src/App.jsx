@@ -16,6 +16,7 @@ import Analytics from './pages/Analytics';
 import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
 import VDONinja from './pages/VDONinja';
+import StreamSetup from './pages/StreamSetup';
 
 /**
  * Protected Route wrapper
@@ -51,6 +52,7 @@ function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="studio" element={<LiveStudio />} />
+        <Route path="stream-setup" element={<StreamSetup />} />
         <Route path="podcast" element={<AIPodcastStudio />} />
         <Route path="avatar" element={<AvatarStudio />} />
         <Route path="fanbase" element={<FanbaseHub />} />

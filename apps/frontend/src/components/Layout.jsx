@@ -5,12 +5,13 @@ import { useNotificationSocket } from '../hooks/useSocket';
 import {
   Home, Video, Mic2, User, Users, MessageSquare, DollarSign,
   FileText, ShoppingBag, BarChart3, Settings as SettingsIcon,
-  Menu, X, Bell, LogOut, Plug, Radio
+  Menu, X, Bell, LogOut, Plug, Radio, Cog
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Live Studio', href: '/studio', icon: Video },
+  { name: 'Stream Setup', href: '/stream-setup', icon: Cog },
   { name: 'VDO.Ninja', href: '/vdo-ninja', icon: Radio },
   { name: 'AI Podcast', href: '/podcast', icon: Mic2 },
   { name: 'Avatar Studio', href: '/avatar', icon: User },
