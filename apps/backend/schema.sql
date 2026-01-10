@@ -442,6 +442,56 @@ CREATE INDEX idx_webhooks_processed ON webhooks(processed);
 CREATE INDEX idx_webhooks_created_at ON webhooks(created_at);
 
 -- ============================================
+-- 16. RTMP CONFIGURATIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS rtmp_configs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  server TEXT NOT NULL,
+  stream_key TEXT NOT NULL,
+  token VARCHAR(255),
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for performance
+CREATE INDEX idx_rtmp_configs_user_id ON rtmp_configs(user_id);
+CREATE INDEX idx_rtmp_configs_enabled ON rtmp_configs(enabled);
+
+-- RLS Policies
+ALTER TABLE rtmp_configs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own RTMP configs" ON rtmp_configs
+  FOR ALL USING (auth.uid() = user_id);
+
+-- ============================================
+-- 17. WEBSOURCES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS websources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  url TEXT NOT NULL,
+  width INTEGER DEFAULT 1920,
+  height INTEGER DEFAULT 1080,
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for performance
+CREATE INDEX idx_websources_user_id ON websources(user_id);
+CREATE INDEX idx_websources_enabled ON websources(enabled);
+
+-- RLS Policies
+ALTER TABLE websources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own websources" ON websources
+  FOR ALL USING (auth.uid() = user_id);
+
+-- ============================================
 -- AUTO-UPDATE TRIGGERS FOR updated_at
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -480,6 +530,12 @@ CREATE TRIGGER update_chat_messages_updated_at BEFORE UPDATE ON chat_messages
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_rtmp_configs_updated_at BEFORE UPDATE ON rtmp_configs
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_websources_updated_at BEFORE UPDATE ON websources
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 -- INITIAL DATA (Optional)
 -- ============================================
@@ -511,3 +567,5 @@ COMMENT ON TABLE chat_reactions IS 'Message reactions/emojis';
 COMMENT ON TABLE notifications IS 'User notifications';
 COMMENT ON TABLE subscriptions IS 'Stripe subscription management';
 COMMENT ON TABLE webhooks IS 'Webhook event log from external services';
+COMMENT ON TABLE rtmp_configs IS 'RTMP server configurations for streaming';
+COMMENT ON TABLE websources IS 'HTML websources and overlays for streams';

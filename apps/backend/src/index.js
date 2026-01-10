@@ -19,6 +19,8 @@ import contentRoutes from './routes/content.js';
 import monetizationRoutes from './routes/monetization.js';
 import webhooksRoutes from './routes/webhooks.js';
 import vdoninjaRoutes from './routes/vdoninja.js';
+import rtmpConfigsRoutes from './routes/rtmpConfigs.js';
+import websourcesRoutes from './routes/websources.js';
 
 // Import socket handlers
 import { setupStreamSocket } from './sockets/streamSocket.js';
@@ -121,6 +123,8 @@ app.use('/api/content', contentRoutes);
 app.use('/api/monetization', monetizationRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/vdoninja', vdoninjaRoutes);
+app.use('/api/rtmp-configs', rtmpConfigsRoutes);
+app.use('/api/websources', websourcesRoutes);
 
 /**
  * Root endpoint
