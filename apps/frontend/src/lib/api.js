@@ -131,4 +131,26 @@ export const monetizationAPI = {
   cancelSubscription: () => api.post('/monetization/cancel-subscription'),
 };
 
+/**
+ * RTMP Configs API
+ */
+export const rtmpConfigsAPI = {
+  list: () => api.get('/rtmp-configs'),
+  get: (id) => api.get(`/rtmp-configs/${id}`),
+  create: (data) => api.post('/rtmp-configs', data),
+  update: (id, data) => api.patch(`/rtmp-configs/${id}`, data),
+  delete: (id) => api.delete(`/rtmp-configs/${id}`),
+};
+
+/**
+ * Websources API
+ */
+export const websourcesAPI = {
+  list: () => api.get('/websources'),
+  get: (id) => api.get(`/websources/${id}`),
+  create: (data) => api.post('/websources', data),
+  update: (id, data) => api.patch(`/websources/${id}`, data),
+  delete: (id) => api.delete(`/websources/${id}`),
+};
+
 export default api;

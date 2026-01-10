@@ -1,36 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Video, Copy, Eye, EyeOff, Key, RefreshCw, Save,
   ExternalLink, Plus, Trash2, Settings, Code, Palette
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { rtmpConfigsAPI, websourcesAPI } from '../lib/api';
 
 /**
  * RTMP & Stream Setup Page
  * Comprehensive streaming configuration with RTMP servers, stream keys, and websources
  */
 function StreamSetup() {
-  const [rtmpConfigs, setRtmpConfigs] = useState([
-    {
-      id: 1,
-      name: 'evmux US East',
-      server: 'rtmp://rtmp1.us-east-1.evmux.com/live',
-      streamKey: 'app-b6zHr3-35539f7e-1450-4412-9c6e-0372cd9bcbba',
-      token: '7db2077153',
-      enabled: true,
-    },
-  ]);
-
-  const [websources, setWebsources] = useState([
-    {
-      id: 1,
-      name: 'Animated Title',
-      url: 'https://publicfiles.evmux.com/static/websources/websource-demo.v7.html',
-      width: 1920,
-      height: 1080,
-      enabled: true,
-    },
-  ]);
+  const [rtmpConfigs, setRtmpConfigs] = useState([]);
+  const [websources, setWebsources] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [showStreamKey, setShowStreamKey] = useState({});
   const [newConfig, setNewConfig] = useState({
@@ -46,6 +29,31 @@ function StreamSetup() {
     height: 1080,
   });
 
+  /**
+   * Load data from API on mount
+   */
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [configsRes, sourcesRes] = await Promise.all([
+        rtmpConfigsAPI.list(),
+        websourcesAPI.list(),
+      ]);
+
+      setRtmpConfigs(configsRes.data.data.configs || []);
+      setWebsources(sourcesRes.data.data.websources || []);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      toast.error('Failed to load configurations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Common RTMP servers
   const rtmpPresets = [
     { name: 'evmux US East', server: 'rtmp://rtmp1.us-east-1.evmux.com/live' },
@@ -60,38 +68,63 @@ function StreamSetup() {
   /**
    * Add new RTMP configuration
    */
-  const handleAddConfig = () => {
+  const handleAddConfig = async () => {
     if (!newConfig.name || !newConfig.server || !newConfig.streamKey) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    const config = {
-      id: Date.now(),
-      ...newConfig,
-      enabled: true,
-    };
+    try {
+      const response = await rtmpConfigsAPI.create({
+        name: newConfig.name,
+        server: newConfig.server,
+        stream_key: newConfig.streamKey,
+        token: newConfig.token || null,
+        enabled: true,
+      });
 
-    setRtmpConfigs([...rtmpConfigs, config]);
-    setNewConfig({ name: '', server: '', streamKey: '' });
-    toast.success('RTMP configuration added!');
+      setRtmpConfigs([...rtmpConfigs, response.data.data.config]);
+      setNewConfig({ name: '', server: '', streamKey: '', token: '' });
+      toast.success('RTMP configuration added!');
+    } catch (error) {
+      console.error('Failed to add config:', error);
+      toast.error('Failed to add configuration');
+    }
   };
 
   /**
    * Delete RTMP configuration
    */
-  const handleDeleteConfig = (id) => {
-    setRtmpConfigs(rtmpConfigs.filter(c => c.id !== id));
-    toast.success('Configuration deleted');
+  const handleDeleteConfig = async (id) => {
+    try {
+      await rtmpConfigsAPI.delete(id);
+      setRtmpConfigs(rtmpConfigs.filter(c => c.id !== id));
+      toast.success('Configuration deleted');
+    } catch (error) {
+      console.error('Failed to delete config:', error);
+      toast.error('Failed to delete configuration');
+    }
   };
 
   /**
    * Toggle configuration enabled state
    */
-  const toggleConfig = (id) => {
-    setRtmpConfigs(rtmpConfigs.map(c =>
-      c.id === id ? { ...c, enabled: !c.enabled } : c
-    ));
+  const toggleConfig = async (id) => {
+    const config = rtmpConfigs.find(c => c.id === id);
+    if (!config) return;
+
+    try {
+      const response = await rtmpConfigsAPI.update(id, {
+        enabled: !config.enabled,
+      });
+
+      setRtmpConfigs(rtmpConfigs.map(c =>
+        c.id === id ? response.data.data.config : c
+      ));
+    } catch (error) {
+      console.error('Failed to toggle config:', error);
+      toast.error('Failed to update configuration');
+    }
   };
 
   /**
@@ -118,37 +151,82 @@ function StreamSetup() {
   /**
    * Add new websource
    */
-  const handleAddWebsource = () => {
+  const handleAddWebsource = async () => {
     if (!newWebsource.name || !newWebsource.url) {
       toast.error('Please provide name and URL');
       return;
     }
 
-    const websource = {
-      id: Date.now(),
-      ...newWebsource,
-      enabled: true,
-    };
+    try {
+      const response = await websourcesAPI.create({
+        name: newWebsource.name,
+        url: newWebsource.url,
+        width: newWebsource.width,
+        height: newWebsource.height,
+        enabled: true,
+      });
 
-    setWebsources([...websources, websource]);
-    setNewWebsource({ name: '', url: '', width: 1920, height: 1080 });
-    toast.success('Websource added!');
+      setWebsources([...websources, response.data.data.websource]);
+      setNewWebsource({ name: '', url: '', width: 1920, height: 1080 });
+      toast.success('Websource added!');
+    } catch (error) {
+      console.error('Failed to add websource:', error);
+      toast.error('Failed to add websource');
+    }
   };
 
   /**
    * Delete websource
    */
-  const handleDeleteWebsource = (id) => {
-    setWebsources(websources.filter(w => w.id !== id));
-    toast.success('Websource deleted');
+  const handleDeleteWebsource = async (id) => {
+    try {
+      await websourcesAPI.delete(id);
+      setWebsources(websources.filter(w => w.id !== id));
+      toast.success('Websource deleted');
+    } catch (error) {
+      console.error('Failed to delete websource:', error);
+      toast.error('Failed to delete websource');
+    }
+  };
+
+  /**
+   * Toggle websource enabled state
+   */
+  const toggleWebsource = async (id) => {
+    const websource = websources.find(w => w.id === id);
+    if (!websource) return;
+
+    try {
+      const response = await websourcesAPI.update(id, {
+        enabled: !websource.enabled,
+      });
+
+      setWebsources(websources.map(w =>
+        w.id === id ? response.data.data.websource : w
+      ));
+    } catch (error) {
+      console.error('Failed to toggle websource:', error);
+      toast.error('Failed to update websource');
+    }
   };
 
   /**
    * Get full RTMP URL
    */
   const getFullRTMPUrl = (config) => {
-    return `${config.server}/${config.streamKey}${config.token ? `?token=${config.token}` : ''}`;
+    return `${config.server}/${config.stream_key || config.streamKey}${config.token ? `?token=${config.token}` : ''}`;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading configurations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -228,7 +306,7 @@ function StreamSetup() {
                     <div className="flex space-x-2">
                       <input
                         type={showStreamKey[config.id] ? 'text' : 'password'}
-                        value={config.streamKey}
+                        value={config.stream_key || config.streamKey}
                         readOnly
                         className="input text-sm flex-1 font-mono"
                       />
@@ -239,7 +317,7 @@ function StreamSetup() {
                         {showStreamKey[config.id] ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                       <button
-                        onClick={() => copyToClipboard(config.streamKey, 'Stream key')}
+                        onClick={() => copyToClipboard(config.stream_key || config.streamKey, 'Stream key')}
                         className="btn-secondary p-2"
                       >
                         <Copy size={16} />
@@ -393,9 +471,7 @@ function StreamSetup() {
                     <input
                       type="checkbox"
                       checked={source.enabled}
-                      onChange={() => setWebsources(websources.map(w =>
-                        w.id === source.id ? { ...w, enabled: !w.enabled } : w
-                      ))}
+                      onChange={() => toggleWebsource(source.id)}
                       className="w-4 h-4"
                     />
                     <h3 className="font-semibold">{source.name}</h3>
