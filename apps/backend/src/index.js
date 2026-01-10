@@ -18,6 +18,7 @@ import usersRoutes from './routes/users.js';
 import contentRoutes from './routes/content.js';
 import monetizationRoutes from './routes/monetization.js';
 import webhooksRoutes from './routes/webhooks.js';
+import vdoninjaRoutes from './routes/vdoninja.js';
 
 // Import socket handlers
 import { setupStreamSocket } from './sockets/streamSocket.js';
@@ -119,6 +120,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/monetization', monetizationRoutes);
 app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/vdoninja', vdoninjaRoutes);
 
 /**
  * Root endpoint

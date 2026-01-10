@@ -15,6 +15,7 @@ import Marketplace from './pages/Marketplace';
 import Analytics from './pages/Analytics';
 import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
+import VDONinja from './pages/VDONinja';
 
 /**
  * Protected Route wrapper
@@ -59,6 +60,7 @@ function App() {
         <Route path="marketplace" element={<Marketplace />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="integrations" element={<Integrations />} />
+        <Route path="vdo-ninja" element={<VDONinja />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
